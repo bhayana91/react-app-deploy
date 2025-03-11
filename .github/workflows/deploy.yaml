@@ -95,4 +95,4 @@ jobs:
         run: aws s3 sync ./dist s3://${{ github.event.inputs.s3Bucket }} --delete
 
       - name: Output Website URL
-        run: 'echo "App deployed to: https://${{ github.event.inputs.s3Bucket }}.s3-website-${{ github.event.inputs.awsRegion }}.amazonaws.com"'
+        run: 'echo "App deployed to: https://${{ github.event.inputs.s3Bucket }}.s3.${{ github.event.inputs.awsRegion }}.amazonaws.com"'
