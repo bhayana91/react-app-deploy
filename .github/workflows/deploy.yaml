@@ -23,6 +23,7 @@ jobs:
         with:
           repository: ${{ github.event.inputs.repoOwner }}/${{ github.event.inputs.repoName }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: master
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
