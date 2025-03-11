@@ -67,7 +67,7 @@ jobs:
             echo "Bucket created: ${{ github.event.inputs.s3Bucket }}"
           else
             echo "Bucket already exists: ${{ github.event.inputs.s3Bucket }}"
-
+          fi
       - name: Enable Public Access & Static Website Hosting
         run: |
           aws s3api put-bucket-policy --bucket ${{ github.event.inputs.s3Bucket }} --policy '{
