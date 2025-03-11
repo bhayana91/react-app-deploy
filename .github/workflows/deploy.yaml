@@ -32,6 +32,23 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # 🔒 Security Scan 1: Run ESLint (Detect Code Vulnerabilities)
+      - name: Run ESLint Security Check
+        run: npx eslint . --ext .js,.ts,.tsx --max-warnings 0 || true
+
+      # 🔒 Security Scan 2: Check Dependencies for Vulnerabilities
+      - name: Run npm Audit
+        run: npm audit --production || true
+
+      # 🔒 Security Scan 3: Run Trivy Security Scan
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          ignore-unfixed: true
+          format: "table"
+          exit-code: 0
+
       - name: Build React App
         run: npm run build
 
@@ -66,9 +83,7 @@ jobs:
           aws s3 website s3://${{ github.event.inputs.s3Bucket }} --index-document index.html
 
       - name: Deploy App to S3
-        run: |
-          aws s3 sync ./dist s3://${{ github.event.inputs.s3Bucket }} --delete
+        run: aws s3 sync ./dist s3://${{ github.event.inputs.s3Bucket }} --delete
 
       - name: Output Website URL
-        run: |
-          echo "App deployed to: https://${{ github.event.inputs.s3Bucket }}.s3-website-${{ github.event.inputs.awsRegion }}.amazonaws.com"
+        run: 'echo "App deployed to: https://${{ github.event.inputs.s3Bucket }}.s3-website-${{ github.event.inputs.awsRegion }}.amazonaws.com"'
