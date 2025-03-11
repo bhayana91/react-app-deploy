@@ -1,3 +1,4 @@
+name: Deploy Vite React application on S3
 on:
   workflow_dispatch:
     inputs:
