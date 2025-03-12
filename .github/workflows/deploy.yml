@@ -51,7 +51,8 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: monitor --all-projects
+          command: monitor
+          args: --all-projects
       - name: Build React App
         run: npm run build
 
