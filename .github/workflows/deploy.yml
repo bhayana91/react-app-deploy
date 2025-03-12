@@ -40,21 +40,16 @@ jobs:
 
       - name: Run npm Audit
         run: npm audit --production || true
-
-      - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "fs"
-          ignore-unfixed: false
-          format: "table"
-          severity: "HIGH,CRITICAL"
-          exit-code: 0
       - name: Run Snyk Security Scan
         uses: snyk/actions/node@master
         with:
-          command: test
+          args: --all-projects --severity-threshold=low --json-file-output=snyk-results.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Upload Snyk Scan Results
+        run: snyk test --all-projects --report
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}  
       - name: Build React App
         run: npm run build
 
