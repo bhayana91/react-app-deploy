@@ -34,15 +34,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # 🔒 Security Scan 1: Run ESLint (Detect Code Vulnerabilities)
+      # 🔒 Security Scans
       - name: Run ESLint Security Check
         run: npx eslint . --ext .js,.ts,.tsx --max-warnings 0 || true
 
-      # 🔒 Security Scan 2: Check Dependencies for Vulnerabilities
       - name: Run npm Audit
         run: npm audit --production || true
 
-      # 🔒 Security Scan 3: Run Trivy Security Scan
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -61,39 +59,45 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ github.event.inputs.awsRegion }}
 
+      - name: Convert S3 Bucket Name to Lowercase
+        run: |
+          echo "S3_BUCKET_LOWER=$(echo '${{ github.event.inputs.s3Bucket }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Create S3 Bucket (if not exists)
         run: |
-          if ! aws s3api head-bucket --bucket ${{ github.event.inputs.s3Bucket }} 2>/dev/null; then
-            aws s3api create-bucket --bucket ${{ github.event.inputs.s3Bucket }} --region ${{ github.event.inputs.awsRegion }} --create-bucket-configuration LocationConstraint=${{ github.event.inputs.awsRegion }}
-            echo "Bucket created: ${{ github.event.inputs.s3Bucket }}"
+          if ! aws s3api head-bucket --bucket "$S3_BUCKET_LOWER" 2>/dev/null; then
+            aws s3api create-bucket --bucket "$S3_BUCKET_LOWER" --region ${{ github.event.inputs.awsRegion }} --create-bucket-configuration LocationConstraint=${{ github.event.inputs.awsRegion }}
+            echo "Bucket created: $S3_BUCKET_LOWER"
           else
-            echo "Bucket already exists: ${{ github.event.inputs.s3Bucket }}"
+            echo "Bucket already exists: $S3_BUCKET_LOWER"
           fi
+
       - name: Allow Public Access to S3 Bucket
         run: |
-          aws s3api put-public-access-block --bucket ${{ github.event.inputs.s3Bucket }} --public-access-block-configuration '{
+          aws s3api put-public-access-block --bucket "$S3_BUCKET_LOWER" --public-access-block-configuration '{
             "BlockPublicAcls": false,
             "IgnorePublicAcls": false,
             "BlockPublicPolicy": false,
             "RestrictPublicBuckets": false
-          }'     
+          }'
+
       - name: Enable Public Access & Static Website Hosting
         run: |
-          aws s3api put-bucket-policy --bucket ${{ github.event.inputs.s3Bucket }} --policy '{
+          aws s3api put-bucket-policy --bucket "$S3_BUCKET_LOWER" --policy '{
             "Version": "2012-10-17",
             "Statement": [{
               "Sid": "PublicReadGetObject",
               "Effect": "Allow",
               "Principal": "*",
               "Action": "s3:GetObject",
-              "Resource": "arn:aws:s3:::${{ github.event.inputs.s3Bucket }}/*"
+              "Resource": "arn:aws:s3:::$S3_BUCKET_LOWER/*"
             }]
           }'
 
-          aws s3 website s3://${{ github.event.inputs.s3Bucket }} --index-document index.html
+          aws s3 website s3://"$S3_BUCKET_LOWER" --index-document index.html
 
       - name: Deploy App to S3
-        run: aws s3 sync ./dist s3://${{ github.event.inputs.s3Bucket }} --delete
+        run: aws s3 sync ./dist s3://"$S3_BUCKET_LOWER" --delete
 
       - name: Output Website URL
-        run: 'echo "App deployed to: https://${{ github.event.inputs.s3Bucket }}.s3.${{ github.event.inputs.awsRegion }}.amazonaws.com/index.html"'
+        run: 'echo "App deployed to: https://$S3_BUCKET_LOWER.s3.${{ github.event.inputs.awsRegion }}.amazonaws.com/index.html"'
