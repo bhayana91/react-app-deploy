@@ -83,17 +83,21 @@ jobs:
 
       - name: Enable Public Access & Static Website Hosting
         run: |
-          aws s3api put-bucket-policy --bucket "$S3_BUCKET_LOWER" --policy '{
+          POLICY=$(cat <<EOF
+          {
             "Version": "2012-10-17",
             "Statement": [{
               "Sid": "PublicReadGetObject",
               "Effect": "Allow",
               "Principal": "*",
               "Action": "s3:GetObject",
-              "Resource": "arn:aws:s3:::$S3_BUCKET_LOWER/*"
+              "Resource": "arn:aws:s3:::${S3_BUCKET_LOWER}/*"
             }]
-          }'
-
+          }
+          EOF
+          )
+          
+          aws s3api put-bucket-policy --bucket "$S3_BUCKET_LOWER" --policy "$POLICY"
           aws s3 website s3://"$S3_BUCKET_LOWER" --index-document index.html
 
       - name: Deploy App to S3
