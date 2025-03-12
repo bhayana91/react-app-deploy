@@ -45,7 +45,13 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --all-projects --report  
+          args: --all-projects --report
+      - name: Monitor and Push to Snyk Dashboard
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: monitor --all-projects
       - name: Build React App
         run: npm run build
 
