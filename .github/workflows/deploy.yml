@@ -45,10 +45,16 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "fs"
-          ignore-unfixed: true
+          ignore-unfixed: false
           format: "table"
+          severity: "HIGH,CRITICAL"
           exit-code: 0
-
+      - name: Run Snyk Security Scan
+        uses: snyk/actions/node@master
+        with:
+          command: test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - name: Build React App
         run: npm run build
 
